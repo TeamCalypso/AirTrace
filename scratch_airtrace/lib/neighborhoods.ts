@@ -1,0 +1,86 @@
+export interface Neighborhood {
+  id: string;
+  name: string;
+  zone: string;
+  lat: number;
+  lng: number;
+  /** 0..1 relative baseline severity used by the deterministic scenario */
+  bias: number;
+}
+
+export const NEIGHBORHOODS: Neighborhood[] = [
+  { id: "karol-bagh", name: "Karol Bagh", zone: "Central Delhi", lat: 28.6519, lng: 77.1907, bias: 0.84 },
+  { id: "connaught-place", name: "Connaught Place", zone: "Central Delhi", lat: 28.6315, lng: 77.2167, bias: 0.8 },
+  { id: "chandni-chowk", name: "Chandni Chowk", zone: "Central Delhi", lat: 28.6562, lng: 77.2301, bias: 0.88 },
+  { id: "civil-lines", name: "Civil Lines", zone: "New Delhi", lat: 28.637, lng: 77.2269, bias: 0.68 },
+  { id: "rouse-avenue", name: "Rouse Avenue", zone: "New Delhi", lat: 28.6424, lng: 77.2249, bias: 0.66 },
+  { id: "patel-nagar", name: "Patel Nagar", zone: "West Delhi", lat: 28.6453, lng: 77.1945, bias: 0.72 },
+  { id: "rajinder-nagar", name: "Rajinder Nagar", zone: "West Delhi", lat: 28.652, lng: 77.18, bias: 0.78 },
+  { id: "dwarka", name: "Dwarka", zone: "West Delhi", lat: 28.5921, lng: 77.046, bias: 0.52 },
+  { id: "rohini", name: "Rohini", zone: "North Delhi", lat: 28.7495, lng: 77.117, bias: 0.58 },
+  { id: "pitampura", name: "Pitampura", zone: "North Delhi", lat: 28.708, lng: 77.106, bias: 0.66 },
+  { id: "model-town", name: "Model Town", zone: "North Delhi", lat: 28.709, lng: 77.225, bias: 0.72 },
+  { id: "bawana", name: "Bawana", zone: "North Delhi", lat: 28.775, lng: 77.064, bias: 0.78 },
+  { id: "narela", name: "Narela", zone: "North-East Delhi", lat: 28.745, lng: 77.315, bias: 0.62 },
+  { id: "shahdara", name: "Shahdara", zone: "East Delhi", lat: 28.6555, lng: 77.3035, bias: 0.8 },
+  { id: "seelampur", name: "Seelampur", zone: "East Delhi", lat: 28.645, lng: 77.278, bias: 0.86 },
+  { id: "ashram-area", name: "Ashram Area", zone: "South Delhi", lat: 28.577, lng: 77.197, bias: 0.74 },
+  { id: "lajpat-nagar", name: "Lajpat Nagar", zone: "South Delhi", lat: 28.5677, lng: 77.2433, bias: 0.76 },
+  { id: "jasola", name: "Jasola", zone: "South Delhi", lat: 28.558, lng: 77.225, bias: 0.7 },
+  { id: "sultanpur", name: "Sultanpur", zone: "South Delhi", lat: 28.519, lng: 77.201, bias: 0.6 },
+  { id: "malviya-nagar", name: "Malviya Nagar", zone: "South Delhi", lat: 28.531, lng: 77.155, bias: 0.62 },
+  { id: "vasant-kunj", name: "Vasant Kunj", zone: "South-West Delhi", lat: 28.5223, lng: 77.1596, bias: 0.58 },
+  { id: "greater-kailash", name: "Greater Kailash", zone: "South-West Delhi", lat: 28.5492, lng: 77.201, bias: 0.54 },
+  { id: "saket", name: "Saket", zone: "South-West Delhi", lat: 28.5245, lng: 77.2066, bias: 0.66 },
+  { id: "nehru-place", name: "Nehru Place", zone: "South Delhi", lat: 28.5552, lng: 77.2555, bias: 0.68 },
+  { id: "okhla", name: "Okhla", zone: "South-East Delhi", lat: 28.555, lng: 77.278, bias: 0.8 },
+  { id: "mayapuri", name: "Mayapuri", zone: "South-West Delhi", lat: 28.5465, lng: 77.183, bias: 0.78 },
+];
+
+export const QUICK_PICKS: string[] = [
+  "karol-bagh",
+  "dwarka",
+  "okhla",
+  "rohini",
+  "vasant-kunj",
+  "lajpat-nagar",
+];
+
+export function findNeighborhood(
+  query: string,
+): Neighborhood | undefined {
+  const q = normalize(query);
+  if (!q) return undefined;
+  const byId = NEIGHBORHOODS.find((n) => n.id === q);
+  if (byId) return byId;
+  return (
+    NEIGHBORHOODS.find((n) => normalize(n.name) === q) ??
+    NEIGHBORHOODS.find((n) => normalize(n.name).startsWith(q)) ??
+    NEIGHBORHOODS.find((n) => normalize(n.name).includes(q))
+  );
+}
+
+export function searchNeighborhoods(query: string, limit = 8): Neighborhood[] {
+  const q = normalize(query);
+  if (!q) return QUICK_PICKS.map((id) => NEIGHBORHOODS.find((n) => n.id === id)!).filter(Boolean);
+  const scored = NEIGHBORHOODS.map((n) => {
+    const name = normalize(n.name);
+    const zone = normalize(n.zone);
+    let score = -1;
+    if (name.startsWith(q)) score = 3;
+    else if (name.includes(q)) score = 2;
+    else if (zone.includes(q)) score = 1;
+    return { n, score };
+  }).filter((s) => s.score >= 0);
+  scored.sort((a, b) => b.score - a.score || a.n.name.localeCompare(b.n.name));
+  return scored.slice(0, limit).map((s) => s.n);
+}
+
+export function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
