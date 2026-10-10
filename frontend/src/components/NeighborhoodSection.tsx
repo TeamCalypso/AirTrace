@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import DecodeText from "./DecodeText";
 import ForecastPanel from "./ForecastPanel";
+import NeighborhoodSimulation from "./NeighborhoodSimulation";
 import { NEIGHBORHOOD_CHAPTER } from "@/lib/chapters";
 import { PinIcon } from "./Icons";
 
@@ -56,6 +57,11 @@ export default function NeighborhoodSection() {
               {NEIGHBORHOOD_CHAPTER.body}
             </p>
           </article>
+
+          {/* Interactive 3 km Micro-Dispersion Sandbox */}
+          <div className="mb-12">
+            <NeighborhoodSimulation />
+          </div>
 
           <div id="forecast" className="scroll-mt-24">
             <ForecastPanel />

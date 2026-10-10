@@ -31,6 +31,8 @@ models/
 node_modules/
 dist/
 .vite/
+.next/
+*.tsbuildinfo
 *.local
 
 # AWS CDK / SAM

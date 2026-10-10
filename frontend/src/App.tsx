@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { EarthGlobe } from './components/EarthGlobe';
+import InversionSimulation from './components/InversionSimulation';
+import NeighborhoodSimulation from './components/NeighborhoodSimulation';
 import { SCENES, MOCK_FIRES, NEIGHBORHOODS } from './data/mockData';
 import type { NeighborhoodData, HourlyForecast } from './types';
 
@@ -220,6 +222,8 @@ export const App: React.FC = () => {
   const [activeScene, setActiveScene] = useState(0);
   const [showForecast, setShowForecast] = useState(false);
   const [showArch, setShowArch] = useState(false);
+  const [showInversionSim, setShowInversionSim] = useState(false);
+  const [showNeighborhoodSim, setShowNeighborhoodSim] = useState(false);
   const [alertN, setAlertN] = useState<NeighborhoodData|null>(null);
 
   // Globe scene is a fractional 0-4 for smooth transitions
@@ -389,6 +393,18 @@ export const App: React.FC = () => {
                 <span style={{ color:'var(--c-amber)' }}>AWS ›</span> {meta.aws}
               </div>
 
+              {/* Simulation launcher for Scene 3 */}
+              {activeScene === 3 && (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  style={{ width:'100%', marginBottom:10, fontSize:12, justifyContent:'center', borderColor:'rgba(244,154,107,0.4)', color:'#f49a6b' }}
+                  onClick={() => setShowInversionSim(true)}
+                >
+                  🔬 Launch Inversion Chamber Simulator
+                </button>
+              )}
+
               {/* Navigation */}
               <div style={{ display:'flex', gap:8 }}>
                 {activeScene > 0 && (
@@ -463,6 +479,14 @@ export const App: React.FC = () => {
                 </div>
               ))}
             </div>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => setShowInversionSim(true)}
+              style={{ marginTop:12, width:'100%', fontSize:11, padding:'7px 8px', justifyContent:'center', background:'#7b1fa2' }}
+            >
+              🔬 Launch Simulator
+            </button>
           </div>
         </div>
       )}
@@ -529,6 +553,9 @@ export const App: React.FC = () => {
                   </p>
                 </div>
                 <div style={{ display:'flex', gap:8 }}>
+                  <button className="btn btn-ghost" style={{ fontSize:12, padding:'9px 16px', color:'#d0ee91', borderColor:'rgba(208,238,145,0.3)' }} onClick={()=>setShowNeighborhoodSim(true)}>
+                    🗺️ 3km Grid Sandbox
+                  </button>
                   <button className="btn btn-alert" style={{ fontSize:12, padding:'9px 18px' }} onClick={()=>setAlertN(selectedN)}>
                     🔔 Alert Signup
                   </button>
@@ -728,6 +755,22 @@ export const App: React.FC = () => {
       {/* ── MODALS ─────────────────────────────────────────────────────────── */}
       {alertN && <AlertModal n={alertN} onClose={()=>setAlertN(null)} />}
       {showArch && <ArchModal onClose={()=>setShowArch(false)} />}
+      {showInversionSim && (
+        <div className="modal-bg" onClick={e=>e.target===e.currentTarget&&setShowInversionSim(false)}>
+          <div className="glass" style={{ borderRadius:24, padding:24, maxWidth:960, width:'95%', maxHeight:'92vh', overflowY:'auto', position:'relative', animation:'fadeUp 0.35s ease' }}>
+            <button onClick={()=>setShowInversionSim(false)} style={{ position:'absolute', top:16, right:16, background:'rgba(255,255,255,0.08)', border:'none', color:'var(--c-muted)', width:32, height:32, borderRadius:16, cursor:'pointer', fontSize:20, lineHeight:1, zIndex:10 }}>×</button>
+            <InversionSimulation />
+          </div>
+        </div>
+      )}
+      {showNeighborhoodSim && (
+        <div className="modal-bg" onClick={e=>e.target===e.currentTarget&&setShowNeighborhoodSim(false)}>
+          <div className="glass" style={{ borderRadius:24, padding:24, maxWidth:1040, width:'95%', maxHeight:'92vh', overflowY:'auto', position:'relative', animation:'fadeUp 0.35s ease' }}>
+            <button onClick={()=>setShowNeighborhoodSim(false)} style={{ position:'absolute', top:16, right:16, background:'rgba(255,255,255,0.08)', border:'none', color:'var(--c-muted)', width:32, height:32, borderRadius:16, cursor:'pointer', fontSize:20, lineHeight:1, zIndex:10 }}>×</button>
+            <NeighborhoodSimulation />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

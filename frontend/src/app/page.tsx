@@ -7,6 +7,7 @@ import HeroSection from "@/components/HeroSection";
 import ChapterSection from "@/components/ChapterSection";
 import NeighborhoodSection from "@/components/NeighborhoodSection";
 import AwsArchitectureModal from "@/components/AwsArchitectureModal";
+import InversionSimulation from "@/components/InversionSimulation";
 import { CHAPTERS } from "@/lib/chapters";
 
 const DATA_SOURCES = [
@@ -44,12 +45,9 @@ export default function AirtracePage() {
           className="pointer-events-auto flex items-center gap-3 font-mono text-[11px] tracking-[0.42em] text-ivory transition-colors hover:text-lime"
         >
           <span aria-hidden="true" className="block h-[3px] w-[3px] bg-lime" />
-          MSR · AIRTRACE
+          AIRTRACE
         </a>
         <div className="pointer-events-auto flex items-center gap-3">
-          <span className="hidden border border-ivory/15 px-2.5 py-1 font-mono text-[9px] tracking-[0.25em] text-lime sm:inline">
-            AWS ENVIRONMENTAL HACK
-          </span>
           <button
             type="button"
             onClick={() => setShowArch(true)}
@@ -74,7 +72,7 @@ export default function AirtracePage() {
         <HeroSection />
         <ChapterSection ch={CHAPTERS.fire} />
         <ChapterSection ch={CHAPTERS.wind} />
-        <ChapterSection ch={CHAPTERS.inversion} />
+        <ChapterSection ch={CHAPTERS.inversion} simulation={<InversionSimulation />} />
         <NeighborhoodSection />
       </main>
 

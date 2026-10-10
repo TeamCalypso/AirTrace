@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import landJson from "@/data/land.json";
+import { WORLD_LIGHTS, DISTRICTS, CORRIDORS } from "@/lib/scene-data";
 
 /**
  * Airtrace — cinematic globe scene.
@@ -96,64 +98,173 @@ function mulberry32(seed: number): () => number {
 /* textures                                                            */
 /* ------------------------------------------------------------------ */
 
-async function loadEarthTexture(): Promise<THREE.Texture | null> {
+async function buildRadiantEarthTexture(quality: "low" | "high"): Promise<THREE.Texture> {
+  const isHigh = quality === "high";
+  const W = isHigh ? 3072 : 2048;
+  const H = isHigh ? 1536 : 1024;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d", { alpha: false })!;
+
+  const lngToX = (lng: number) => ((lng + 180) / 360) * W;
+  const latToY = (lat: number) => ((90 - lat) / 180) * H;
+
+  // 1. Ocean base: deep, rich abyssal midnight-teal
+  const oceanGrad = ctx.createLinearGradient(0, 0, 0, H);
+  oceanGrad.addColorStop(0, "#06130f");
+  oceanGrad.addColorStop(0.25, "#081914");
+  oceanGrad.addColorStop(0.5, "#0b251d");
+  oceanGrad.addColorStop(0.75, "#081914");
+  oceanGrad.addColorStop(1, "#06130f");
+  ctx.fillStyle = oceanGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // 2. Continents rasterised from Natural Earth 50m (land.json)
+  const LAND = (landJson as { rings: number[][] }).rings;
+
+  // Pre-render land mask on separate canvas for exact clipping
+  const landCanvas = document.createElement("canvas");
+  landCanvas.width = W;
+  landCanvas.height = H;
+  const lctx = landCanvas.getContext("2d")!;
+  lctx.fillStyle = "#000000";
+  lctx.fillRect(0, 0, W, H);
+  lctx.fillStyle = "#ffffff";
+  lctx.beginPath();
+  for (const ring of LAND) {
+    for (let i = 0; i < ring.length; i += 2) {
+      const x = lngToX(ring[i]);
+      const y = latToY(ring[i + 1]);
+      if (i === 0) lctx.moveTo(x, y);
+      else lctx.lineTo(x, y);
+    }
+  }
+  lctx.fill("evenodd");
+
+  // Coastal shelf outer halo (shallow continental waters)
+  ctx.save();
+  ctx.strokeStyle = "rgba(25, 78, 60, 0.55)";
+  ctx.lineWidth = isHigh ? 7 : 4;
+  ctx.beginPath();
+  for (const ring of LAND) {
+    for (let i = 0; i < ring.length; i += 2) {
+      const x = lngToX(ring[i]);
+      const y = latToY(ring[i + 1]);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+  }
+  ctx.stroke();
+
+  // Continent fill: visible, distinct forest/slate-teal
+  ctx.fillStyle = "#163a2f";
+  ctx.fill("evenodd");
+
+  // Crisp coastline stroke
+  ctx.strokeStyle = "#225848";
+  ctx.lineWidth = isHigh ? 2.0 : 1.4;
+  ctx.stroke();
+  ctx.restore();
+
+  // 3. Load NASA night lights (earth-night.jpg) and screen-blend
   try {
     const res = await fetch("/images/earth-night.jpg");
-    if (!res.ok) return null;
-    const bmp = await createImageBitmap(await res.blob());
-    const tex = new THREE.CanvasTexture(bmp);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = 4;
-    return tex;
-  } catch {
-    return null;
-  }
-}
+    if (res.ok) {
+      const blob = await res.blob();
+      const bmp = await createImageBitmap(blob);
+      const nasaCanvas = document.createElement("canvas");
+      nasaCanvas.width = W;
+      nasaCanvas.height = H;
+      const nctx = nasaCanvas.getContext("2d")!;
+      nctx.drawImage(bmp, 0, 0, W, H);
 
-/** Dark procedural fallback map if the painted texture is unavailable. */
-function makeFallbackTexture(): THREE.CanvasTexture {
-  const c = document.createElement("canvas");
-  c.width = 1024;
-  c.height = 512;
-  const ctx = c.getContext("2d")!;
-  ctx.fillStyle = "#08130f";
-  ctx.fillRect(0, 0, 1024, 512);
-  ctx.strokeStyle = "rgba(160,220,180,0.06)";
-  ctx.lineWidth = 1;
-  for (let x = 0; x <= 1024; x += 64) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke();
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.globalAlpha = 0.45;
+      ctx.drawImage(nasaCanvas, 0, 0);
+      ctx.restore();
+    }
+  } catch {
+    // proceed without NASA texture if unavailable
   }
-  for (let y = 0; y <= 512; y += 64) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke();
-  }
-  const px = (lng: number) => ((lng + 180) / 360) * 1024;
-  const py = (lat: number) => ((90 - lat) / 180) * 512;
-  const india: Array<[number, number]> = [
-    [74, 35], [77, 34], [79.5, 31.5], [82, 29.5], [85, 27.5], [89, 27],
-    [92, 27], [95, 25], [97, 22], [96, 17], [92, 14], [88, 12.5],
-    [84.5, 10.5], [81, 7.5], [78, 9], [75, 12], [73, 17], [71, 22],
-    [69, 24], [70.5, 27], [72.5, 30], [74, 34],
-  ];
-  ctx.fillStyle = "#132218";
-  ctx.beginPath();
-  india.forEach(([lng, lat], i) => {
-    if (i === 0) ctx.moveTo(px(lng), py(lat));
-    else ctx.lineTo(px(lng), py(lat));
-  });
-  ctx.closePath();
-  ctx.fill();
-  ctx.strokeStyle = "rgba(150,220,170,0.35)";
-  ctx.stroke();
+
+  // 4. Subtle, minimal procedural pinpoint city lights
+  const lightsCanvas = document.createElement("canvas");
+  lightsCanvas.width = W;
+  lightsCanvas.height = H;
+  const lightsCtx = lightsCanvas.getContext("2d")!;
+  lightsCtx.fillStyle = "#000000";
+  lightsCtx.fillRect(0, 0, W, H);
+
   const rng = mulberry32(42);
-  ctx.fillStyle = "rgba(244,154,107,0.8)";
-  for (let i = 0; i < 220; i++) {
-    const [lng, lat] = india[Math.floor(rng() * india.length)];
-    ctx.globalAlpha = 0.15 + rng() * 0.6;
-    ctx.fillRect(px(lng) + (rng() - 0.5) * 40, py(lat) + (rng() - 0.5) * 26, 1.4, 1.4);
+
+  const drawGlow = (
+    x: number,
+    y: number,
+    r: number,
+    intensity: number,
+  ) => {
+    // Bare-minimum tiny pinpoint dot with soft edge
+    const g = lightsCtx.createRadialGradient(x, y, 0, x, y, Math.max(1, r));
+    g.addColorStop(0, `rgba(255, 240, 205, ${0.45 * intensity})`);
+    g.addColorStop(0.4, `rgba(255, 190, 75, ${0.25 * intensity})`);
+    g.addColorStop(1, "rgba(255, 140, 30, 0)");
+    lightsCtx.fillStyle = g;
+    lightsCtx.beginPath();
+    lightsCtx.arc(x, y, Math.max(1, r), 0, Math.PI * 2);
+    lightsCtx.fill();
+  };
+
+  // Only key primary metropolitan centers — bare minimum radius (1.8px - 3.2px)
+  for (const [lat, lng, intensity] of WORLD_LIGHTS) {
+    if (intensity < 0.7) continue; // Keep only principal global hubs, greatly decreasing spot count
+    const x = lngToX(lng);
+    const y = latToY(lat);
+    const r = (isHigh ? 2.2 : 1.5) + intensity * (isHigh ? 1.2 : 0.8);
+    drawGlow(x, y, r, intensity * 0.55);
+
+    // Only 6-10 tiny pinpoint speckles around major hubs
+    const speckles = Math.round(10 * intensity);
+    for (let i = 0; i < speckles; i++) {
+      const a = rng() * Math.PI * 2;
+      const dist = Math.pow(rng(), 0.7) * (r * 3.2);
+      const px = x + Math.cos(a) * dist;
+      const py = y + Math.sin(a) * dist * 0.75;
+      drawGlow(px, py, 0.85, 0.22 * (1 - dist / (r * 3.2)));
+    }
   }
-  ctx.globalAlpha = 1;
-  const tex = new THREE.CanvasTexture(c);
+
+  // Faint, sparse village pinpricks across populated latitudes (bare minimum)
+  const villageCount = isHigh ? 2200 : 1100;
+  for (let i = 0; i < villageCount; i++) {
+    const lat = Math.asin(rng() * 2 - 1) / D2R;
+    const lng = rng() * 360 - 180;
+    const weight = Math.exp(-Math.pow((lat - 27) / 22, 2)) * 0.85 + 0.15;
+    if (rng() > weight) continue;
+    const x = lngToX(lng);
+    const y = latToY(lat);
+    drawGlow(x, y, 0.8, 0.15);
+  }
+
+  // Clip lights strictly to land so oceans remain clear
+  lightsCtx.globalCompositeOperation = "destination-in";
+  lightsCtx.drawImage(landCanvas, 0, 0);
+  lightsCtx.globalCompositeOperation = "source-over";
+
+  // Gentle single screen composite onto main Earth canvas at bare-minimum alpha
+  ctx.save();
+  ctx.globalCompositeOperation = "screen";
+  ctx.globalAlpha = 0.4;
+  ctx.drawImage(lightsCanvas, 0, 0);
+  ctx.restore();
+
+  const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.anisotropy = 4;
+  tex.needsUpdate = true;
   return tex;
 }
 
@@ -234,12 +345,40 @@ export async function createGlobeScene(
   scene.add(earthGroup);
 
   /* --- earth ------------------------------------------------------- */
-  const tex = (await loadEarthTexture()) ?? makeFallbackTexture();
+  const tex = await buildRadiantEarthTexture(opts.quality);
   const earth = new THREE.Mesh(
     new THREE.SphereGeometry(1, high ? 96 : 64, high ? 64 : 48),
-    new THREE.MeshBasicMaterial({ map: tex, color: 0xdfe8e0 }),
+    new THREE.MeshBasicMaterial({ map: tex, color: 0xffffff }),
   );
   earthGroup.add(earth);
+
+  /* --- inner atmospheric limb haze --------------------------------- */
+  const limbMat = new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: new THREE.Color(0x286352) } },
+    vertexShader: `
+      varying vec3 vN;
+      varying vec3 vV;
+      void main() {
+        vN = normalize(normalMatrix * normal);
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vV = normalize(-mv.xyz);
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      uniform vec3 uColor;
+      varying vec3 vN;
+      varying vec3 vV;
+      void main() {
+        float f = pow(1.0 - max(dot(vN, vV), 0.0), 3.2);
+        gl_FragColor = vec4(uColor * f * 1.35, f * 0.7);
+      }`,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    side: THREE.FrontSide,
+  });
+  const limb = new THREE.Mesh(new THREE.SphereGeometry(1.004, 64, 48), limbMat);
+  earthGroup.add(limb);
 
   /* --- graticule --------------------------------------------------- */
   {
@@ -264,9 +403,9 @@ export async function createGlobeScene(
     const graticule = new THREE.LineSegments(
       g,
       new THREE.LineBasicMaterial({
-        color: 0x9fc9b0,
+        color: 0x7ebaa7,
         transparent: true,
-        opacity: 0.07,
+        opacity: 0.28,
         depthWrite: false,
       }),
     );

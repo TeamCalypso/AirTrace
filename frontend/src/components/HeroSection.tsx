@@ -4,14 +4,6 @@ import { useEffect, useState } from "react";
 import DecodeText from "./DecodeText";
 import { OrbitIcon } from "./Icons";
 
-const SOURCES = [
-  "SENTINEL-5P · TROPOMI",
-  "NASA VIIRS",
-  "ERA-5 WINDS",
-  "CPCB MONITORS",
-  "AWS ML PIPELINE",
-];
-
 export default function HeroSection() {
   const [inView, setInView] = useState(false);
 
@@ -36,28 +28,10 @@ export default function HeroSection() {
             <OrbitIcon className="h-4 w-4 text-ember" />
             <DecodeText text="CH.01 — ORBIT · SENTINEL-5P PASS · DELHI NCR (09:12 UTC)" />
           </p>
-          <ul className="hidden flex-wrap justify-end gap-2 md:flex" aria-label="Data sources used in this explainer">
-            {SOURCES.map((s) => (
-              <li
-                key={s}
-                className="border border-ivory/20 px-2.5 py-1 font-mono text-[9px] tracking-[0.18em] text-ivory/50"
-              >
-                {s}
-              </li>
-            ))}
-          </ul>
         </div>
 
         {/* headline block */}
         <div className={`reveal max-w-4xl ${inView ? "is-in" : ""}`}>
-          <p
-            className={`fade-reveal mb-6 font-mono text-[10px] tracking-[0.32em] text-ivory/55 ${
-              inView ? "is-in" : ""
-            }`}
-            style={{ transitionDelay: "150ms" }}
-          >
-            MSR · SATELLITE SMOG FORECAST — DELHI NCR
-          </p>
           <h1 className="f-display text-[clamp(2.7rem,7vw,6.1rem)] leading-[1.02] text-ivory">
             <span className="line-mask">
               <span style={{ transitionDelay: "200ms" }}>From 824 kilometres up,</span>
