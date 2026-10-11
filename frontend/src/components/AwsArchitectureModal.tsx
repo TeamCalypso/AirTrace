@@ -94,7 +94,7 @@ export default function AwsArchitectureModal({
               AWS CLOUD ARCHITECTURE · WE-MAKE-DEVS × AWS HACKATHON
             </p>
             <h2 id="arch-title" className="f-display mt-2 text-2xl md:text-3xl text-ivory">
-              MSR: Satellite Smog Forecast Pipeline
+              Airtrace: Satellite Smog Forecast Pipeline
             </h2>
           </div>
           <button

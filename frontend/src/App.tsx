@@ -132,7 +132,7 @@ const AlertModal: React.FC<{ n:NeighborhoodData; onClose:()=>void }> = ({ n, onC
                 <input type="range" min={100} max={450} step={50} value={thresh} onChange={e=>setThresh(+e.target.value)}/>
               </div>
               <div style={{padding:'10px 14px',background:'rgba(66,133,244,0.07)',border:'1px solid rgba(66,133,244,0.18)',borderRadius:12,fontSize:12,color:'var(--c-muted)',lineHeight:1.6}}>
-                <strong style={{color:'var(--c-text)'}}>Sample SMS:</strong> "MSR: {n.name} will cross AQI {thresh} tomorrow 06:00 AM. Hazardous for outdoor activity. Stay indoors."
+                <strong style={{color:'var(--c-text)'}}>Sample SMS:</strong> "Airtrace: {n.name} will cross AQI {thresh} tomorrow 06:00 AM. Hazardous for outdoor activity. Stay indoors."
               </div>
               <button type="submit" className="btn btn-alert" style={{justifyContent:'center',marginTop:4}}>🔔 Activate Alert</button>
             </form>
@@ -319,7 +319,7 @@ export const App: React.FC = () => {
             boxShadow:'0 4px 16px rgba(0,188,212,0.2)',
           }}>🛰️</div>
           <div>
-            <div style={{ fontWeight:700, fontSize:15, letterSpacing:'-0.01em' }}>MSR</div>
+            <div style={{ fontWeight:700, fontSize:15, letterSpacing:'-0.01em' }}>Airtrace</div>
             <div style={{ fontSize:11, color:'var(--c-muted)', fontFamily:'var(--ffm)', lineHeight:1.2 }}>
               Satellite Smog Forecast · Delhi NCR
             </div>
@@ -732,7 +732,7 @@ export const App: React.FC = () => {
 
             {/* Footer */}
             <div style={{ textAlign:'center', fontSize:11, color:'var(--c-dim)', fontFamily:'var(--ffm)', padding:'8px 0 4px' }}>
-              MSR · Team Calypso: Saket, Ritvik, Mahek · WeMakeDevs × AWS Environmental Hacks (Air Track)
+              Airtrace · Team Calypso: Saket, Ritvik, Mahek · WeMakeDevs × AWS Environmental Hacks (Air Track)
             </div>
           </div>
         </div>
