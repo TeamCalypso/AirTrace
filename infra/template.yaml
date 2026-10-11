@@ -1,0 +1,81 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Airtrace API (Lambda + HTTP API + DynamoDB + S3)
+
+Parameters:
+  CorsOrigins:
+    Type: String
+    Default: "http://localhost:3000,http://localhost:5173"
+    Description: Comma separated allowed browser origins
+
+Resources:
+  SubscriptionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: airtrace-subscriptions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: subscription_id, AttributeType: S }
+        - { AttributeName: neighborhood_id, AttributeType: S }
+      KeySchema:
+        - { AttributeName: subscription_id, KeyType: HASH }
+      GlobalSecondaryIndexes:
+        - IndexName: by_neighborhood
+          KeySchema:
+            - { AttributeName: neighborhood_id, KeyType: HASH }
+          Projection: { ProjectionType: ALL }
+
+  DataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub airtrace-data-${AWS::AccountId}-${AWS::Region}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 20
+        ThrottlingRateLimit: 10
+
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: airtrace-api
+      CodeUri: ../build/api
+      Handler: app.main.handler
+      Runtime: python3.12
+      Architectures: [x86_64]
+      MemorySize: 512
+      Timeout: 15
+      Environment:
+        Variables:
+          FORECAST_SOURCE: mock
+          SUBSCRIPTIONS_TABLE: !Ref SubscriptionsTable
+          AIRTRACE_BUCKET: !Ref DataBucket
+          CORS_ORIGINS: !Ref CorsOrigins
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref SubscriptionsTable }
+        - S3ReadPolicy: { BucketName: !Ref DataBucket }
+      Events:
+        Proxy:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /{proxy+}
+            Method: ANY
+
+Outputs:
+  ApiUrl:
+    Value: !Sub https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com
+  SubscriptionsTable:
+    Value: !Ref SubscriptionsTable
+  DataBucket:
+    Value: !Ref DataBucket

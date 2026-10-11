@@ -1,4 +1,4 @@
-# MSR: Satellite Smog Forecast
+# Airtrace: Satellite Smog Forecast
 
 **48-hour, neighborhood-level (~3 km) PM2.5 / AQI forecasts for Delhi NCR**, built by fusing satellite aerosol data, weather forecasts and fire detections. Built on AWS.
 
@@ -34,7 +34,7 @@ backend/
   api/        FastAPI service (runs locally or on Lambda)
   functions/  Lambda handlers: ingest, inference, summaries, alerts
 ml/
-  msr_ml/     shared feature engineering + model code
+  airtrace_ml/     shared feature engineering + model code
   training/   training & evaluation scripts (local / SageMaker)
   notebooks/  exploration
 infra/        AWS infrastructure as code (CDK)

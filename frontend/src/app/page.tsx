@@ -81,10 +81,10 @@ export default function AirtracePage() {
         <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[1.3fr_1fr]">
           <div>
             <h2 className="f-display mb-4 text-2xl text-ivory">
-              About MSR: Satellite Smog Forecast
+              About Airtrace: Satellite Smog Forecast
             </h2>
             <p className="max-w-md text-[13.5px] leading-relaxed text-ivory/60">
-              MSR is a 48-hour neighborhood-level (~3 km) PM2.5 / AQI forecast prototype for Delhi NCR, built by fusing satellite aerosol data (Sentinel-5P TROPOMI & NASA VIIRS), ERA-5 weather transport, and CPCB ground stations on AWS.
+              Airtrace is a 48-hour neighborhood-level (~3 km) PM2.5 / AQI forecast prototype for Delhi NCR, built by fusing satellite aerosol data (Sentinel-5P TROPOMI & NASA VIIRS), ERA-5 weather transport, and CPCB ground stations on AWS.
             </p>
             <div className="mt-5 border border-lime/25 bg-lime/[0.04] p-3 text-xs font-mono text-lime/90 max-w-md">
               TEAM CALYPSO: Saket, Ritvik, Mahek

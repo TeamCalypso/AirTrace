@@ -1,6 +1,6 @@
 # ML
 
-- `msr_ml/`: shared package (grid, feature engineering, AQI conversion, model wrappers), used by training and inference
+- `airtrace_ml/`: shared package (grid, feature engineering, AQI conversion, model wrappers), used by training and inference
 - `training/`: training and evaluation entry points (local and SageMaker script mode)
 - `notebooks/`: exploration and validation analysis
 
